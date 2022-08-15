@@ -14,15 +14,20 @@ class Server_OPCUA_txt:
         self.serverTag = 0
 
         # Конфигурация сервера
-        self.server = Server()
-        self.server.set_endpoint(self.config['UA_HOST'])
-        self.server.set_server_name(self.config["UA_SERVER_NAME"])
-        self.idx = self.server.register_namespace(self.config["UA_ROOT_NAMESPACE"])
-        self.myobj = self.server.nodes.objects.add_folder(self.idx, "DATA")
+        try:
+            self.server = Server()
+            self.server.set_endpoint(self.config['UA_HOST'])
+            self.server.set_server_name(self.config["UA_SERVER_NAME"])
+            self.idx = self.server.register_namespace(self.config["UA_ROOT_NAMESPACE"])
+            self.myobj = self.server.nodes.objects.add_folder(self.idx, "DATA")
+        except TypeError as e:
+            self.logging.warning("Ошибка при создание сервера: " + str(e))
 
         # Пульсирующий тэг(SERVER LIFE)
-        self.tagLifeServer = self.myobj.add_variable(self.idx, 'Life Server', False, ua.VariantType.Boolean)
-
+        try:
+            self.tagLifeServer = self.myobj.add_variable(self.idx, 'Life Server', False, ua.VariantType.Boolean)
+        except AttributeError as e:
+            self.logging.warning("Сервер не создан" + str(e))
     def life_server_tag(self):
         while True:
             time.sleep(5)
