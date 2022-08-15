@@ -45,6 +45,20 @@ def last_file(directory):
     else:
         return False
 
+# Проверка на дупликаты
+def dublicates(list):
+    if list != False:
+        result = []
+        result = [result.append(list[i]['tag']) for i in range(len(list))]
+        setResult = set(result)
+        for elem in setResult:
+            if result.count(elem) > 1:
+                indices = [i for i, x in enumerate(result) if x == elem]
+                list.pop(indices[0])
+        return list
+    else:
+        return False
+
 
 # Разбираем текстовый файл
 def get_file(dir):
@@ -63,3 +77,7 @@ def get_file(dir):
     else:
         logger.warning("Текстовый файл не найден")
         return False
+
+
+def getMainTags(path):
+    return dublicates(get_file(path))

@@ -1,15 +1,17 @@
+import datetime
 import time
 
 from . import logInfo, parser
 from opcua import Server, ua
-import threading
 
 
 class Server_OPCUA_txt:
     def __init__(self):
+        self.var = None
         self.logging = logInfo.get_logger(__name__)
         self.config = parser.get_config()
         self.flag = 0
+        self.serverTag = 0
 
         # Конфигурация сервера
         self.server = Server()
@@ -35,6 +37,36 @@ class Server_OPCUA_txt:
                 self.logging.warning("Сервер мертв, пошел на перезапуск")
                 self.restart()
 
+    def main_tags(self):
+        def float_or_str(value):
+            try:
+                return float(value)
+            except:
+                return str(value)
+
+        while True:
+            self.count = 0
+            self.mainTags = parser.getMainTags(self.config['path'])
+
+            dictTags = []
+            for element in self.mainTags:
+                self.var = self.myobj.add_variable(self.idx, element['tag'], element['value'], parser.get_ua_type(element['value']))
+                self.datavalue = ua.DataValue(variant=float_or_str(element['value']))
+                self.datavalue.SourceTimestamp = datetime.datetime.strptime(element['date'], '%d-%b-%Y %H:%M:%S')
+                if element['Status'] == 'Bad':
+                    self.datavalue.StatusCode = ua.StatusCode(ua.StatusCodes.Bad)
+                self.var.set_value(self.datavalue)
+                self.count += 1
+                dictTags.append(self.var)
+
+                # print(element)
+            self.logging.info("Создание тегов: " + str(self.count))
+            if len(dictTags) != len(self.mainTags):
+                self.server.delete_nodes(dictTags)
+            time.sleep(30)
+
+
+
     def restart(self):
         self.logging.warning('Остановка сервера')
         self.server.stop()
@@ -46,7 +78,8 @@ class Server_OPCUA_txt:
 
         try:
             self.server.start()
-            self.life_server_tag()
+            self.main_tags()
+            # self.life_server_tag()
         except KeyboardInterrupt:
             self.logging.warning('Закрытие программы')
         self.server.stop()
