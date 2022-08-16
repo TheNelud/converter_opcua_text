@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<configuration>
+    <UA_HOST>opc.tcp://127.0.0.1:4858</UA_HOST>
+    <UA_SERVER_NAME>GAS</UA_SERVER_NAME>
+    <UA_ROOT_NAMESPACE>root1</UA_ROOT_NAMESPACE>
+    <UPDATE_RATE>5</UPDATE_RATE> <!--s-->
+    <path>D:\MyProjects\Job\converter_opcua_text\RTP_04</path>
+</configuration>
