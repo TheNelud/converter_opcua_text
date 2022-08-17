@@ -24,7 +24,7 @@ def get_ua_type(value):
 
 
 # Чтение файла конфигурации, для создания сервера
-def get_config(configFile='config.xml'):
+def get_config(configFile='cfg.xml'):
     try:
         tree = ET.parse(configFile)
         root = tree.getroot()

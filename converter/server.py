@@ -86,6 +86,7 @@ class Server_OPCUA_txt:
                 self.logging.info("Нет новых файлов")
                 self.life_server_tag()
                 time.sleep(int(self.config["UPDATE_RATE"]))
+
     def start(self):
         # Запускаем сервер ,создаем ветку данных
         # В цикле проверяем обновления текстового файла в директории,
