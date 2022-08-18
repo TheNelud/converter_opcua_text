@@ -69,7 +69,7 @@ class Server_OPCUA_txt:
     def restart(self):
         self.logging.warning('Остановка сервера')
         self.server.stop()
-        time.sleep(10)
+        time.sleep(60)
         self.logging.warning('Запуск сервера')
         self.start()
 
@@ -87,6 +87,10 @@ class Server_OPCUA_txt:
                 self.life_server_tag()
                 time.sleep(int(self.config["UPDATE_RATE"]))
 
+            if int(time.strftime("%M")) == 0:
+                self.logging.warning("Опа, час прошели, пошел на глобальный перезапуск!")
+                self.restart()
+
     def start(self):
         # Запускаем сервер ,создаем ветку данных
         # В цикле проверяем обновления текстового файла в директории,
@@ -97,6 +101,8 @@ class Server_OPCUA_txt:
             self.server.start()
             self.main_tags()
             self.chekingCreationTxt()
+
+
 
         except KeyboardInterrupt:
             self.logging.warning('Закрытие программы')

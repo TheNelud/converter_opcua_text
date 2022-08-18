@@ -7,7 +7,7 @@ from converter.parser import get_config, last_file
 if __name__ == '__main__':
     config = get_config()
     print(config['path'])
-    oldFile = os.path.join(config['path'], 'RTP_Values.txt')
+    oldFile = os.path.join(config['path'], 'RTP_Values.txt_')
     print(oldFile)
 
     while True:
