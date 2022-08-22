@@ -38,6 +38,9 @@ def get_config(configFile='cfg.xml'):
 
 
 # Чекаем в выбранной директории последний текстовый файл
+# def last_file(directory):
+#     return os.path.join(directory, 'RTP_Values')
+
 def last_file(directory):
     files = [os.path.join(directory, _) for _ in os.listdir(directory) if _.endswith('.txt')]
     if len(files) > 0:
@@ -64,15 +67,18 @@ def dublicates(list):
 def get_file(dir):
     res = []
     fl = last_file(dir)
+    _file = open(fl,'r')
     if fl != False:
-        for line in open(fl, 'r'):
+        for line in _file:
             line = line.strip()
             res.append(dict(zip(("tag", "date", "value", "Status"), line.split(","))))
+
         for i in range(len(res)):
             if 'Status' in res[i]:
                 res[i]['Status'] = 'Bad'
             else:
                 res[i]['Status'] = 'Good'
+        _file.close()
         return res
     else:
         logger.warning("Текстовый файл не найден")
