@@ -55,10 +55,11 @@ class Server_OPCUA_txt:
         self.count = 0
 
         for element in self.mainTags:
+            # print(element['value'])
             self.var = self.myobj.add_variable(self.idx, element['tag'], element['value'],
                                                parser.get_ua_type(element['value']))
             self.datavalue = ua.DataValue(variant=float_or_str(element['value']))
-            self.datavalue.SourceTimestamp = datetime.datetime.strptime(element['date'], '%d-%b-%Y %H:%M:%S')
+            self.datavalue.SourceTimestamp = datetime.datetime.strptime(element['date'], '%d-%b-%Y %H:%M:%S') - datetime.timedelta(hours=5)
             if element['Status'] == 'Bad':
                 self.datavalue.StatusCode = ua.StatusCode(ua.StatusCodes.Bad)
             self.var.set_value(self.datavalue)
@@ -75,7 +76,7 @@ class Server_OPCUA_txt:
 
     def chekingCreationTxt(self):
         while True:
-            self.newFile = parser.last_file(self.config['path'])
+            self.newFile = parser.getMainTags(self.config['path'])
             if self.lastFile != self.newFile:
                 self.logging.warning("Появился новый файл! Удаление старого дерева и создание нового дерева данных")
                 self.server.delete_nodes(self.dictTags)
@@ -83,13 +84,11 @@ class Server_OPCUA_txt:
                 self.main_tags()
                 self.life_server_tag()
             else:
-                # self.logging.info("Нет новых файлов")
+                self.logging.info("Нет новых файлов")
                 self.life_server_tag()
                 time.sleep(int(self.config["UPDATE_RATE"]))
 
-            # if int(time.strftime("%M")) == 0:
-            #     self.logging.warning("Опа, час прошели, пошел на глобальный перезапуск!")
-            #     self.restart()
+
 
     def start(self):
         # Запускаем сервер ,создаем ветку данных
