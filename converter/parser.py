@@ -48,11 +48,13 @@ def last_file(directory):
     else:
         return False
 
+
 # Проверка на дупликаты
 def dublicates(list):
     if list != False:
         result = []
-        result = [result.append(list[i]['tag']) for i in range(len(list))]
+        for i in range(len(list)):
+            result.append(list[i]['tag'])
         setResult = set(result)
         for elem in setResult:
             if result.count(elem) > 1:
@@ -67,7 +69,7 @@ def dublicates(list):
 def get_file(dir):
     res = []
     fl = last_file(dir)
-    _file = open(fl,'r')
+    _file = open(fl, 'r')
     if fl != False:
         for line in _file:
             line = line.strip()
@@ -87,3 +89,17 @@ def get_file(dir):
 
 def getMainTags(path):
     return dublicates(get_file(path))
+
+
+# if __name__ == "__main__":
+#     config = get_config()
+#
+#     count1 = 0
+#     for elem in get_file(config['path']):
+#         count1 += 1
+#     print(count1)
+#
+#     count = 0
+#     for elem in getMainTags(config['path']):
+#         count += 1
+#     print(count)

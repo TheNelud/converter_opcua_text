@@ -161,3 +161,8 @@
 2022-08-19 13:01:00,832 - [WARNING] - converter.server - (server.py).restart(73) - Запуск сервера
 2022-08-19 13:13:52,012 - [WARNING] - converter.server - (server.py).start(108) - Закрытие программы
 2022-08-19 13:13:53,580 - [WARNING] - converter.server - (server.py).start(108) - Закрытие программы
+2022-08-23 16:08:50,198 - [WARNING] - converter.server - (server.py).chekingCreationTxt(81) - Появился новый файл! Удаление старого дерева и создание нового дерева данных
+2022-08-24 08:35:14,910 - [WARNING] - converter.server - (server.py).chekingCreationTxt(81) - Появился новый файл! Удаление старого дерева и создание нового дерева данных
+2022-08-24 09:58:57,707 - [WARNING] - converter.server - (server.py).chekingCreationTxt(81) - Появился новый файл! Удаление старого дерева и создание нового дерева данных
+2022-08-24 10:01:30,403 - [WARNING] - converter.server - (server.py).start(107) - Закрытие программы
+2022-08-31 07:59:29,993 - [WARNING] - converter.server - (server.py).chekingCreationTxt(81) - Появился новый файл! Удаление старого дерева и создание нового дерева данных

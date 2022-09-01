@@ -17,11 +17,11 @@ if __name__ == '__main__':
             os.rename(oldFile, newFile)
             oldFile = os.path.join(config['path'], 'RTP_Values.txt')
             print('RTP_VALUES.txt_')
-            time.sleep(15)
+            time.sleep(50)
         else:
             oldFile = os.path.join(config['path'], 'RTP_Values.txt')
             newFile = os.path.join(config['path'], 'RTP_Values.txt')
             os.rename(oldFile, newFile)
             oldFile = os.path.join(config['path'], 'RTP_Values.txt')
             print('RTP_VALUES.txt')
-            time.sleep(15)
+            time.sleep(50)

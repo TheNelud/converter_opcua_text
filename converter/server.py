@@ -1,9 +1,13 @@
 import datetime
+import logging
+import sys
 import time
-import threading
+from threading import Timer
 
+import converter
 from . import logInfo, parser
 from opcua import Server, ua
+from opcua.ua import NodeId, NodeIdType
 
 
 class Server_OPCUA_txt:
@@ -12,7 +16,7 @@ class Server_OPCUA_txt:
         self.logging = logInfo.get_logger(__name__)
         self.config = parser.get_config()
         self.flag = 0
-
+        self.tags = parser.getMainTags(self.config['path'])
         self.lastFile = parser.last_file(self.config['path'])
 
         # Конфигурация сервера
@@ -22,87 +26,108 @@ class Server_OPCUA_txt:
             self.server.set_server_name(self.config["UA_SERVER_NAME"])
             self.idx = self.server.register_namespace(self.config["UA_ROOT_NAMESPACE"])
             self.myobj = self.server.nodes.objects.add_folder(self.idx, "DATA")
+
         except TypeError as e:
             self.logging.warning("Ошибка при создание сервера: " + str(e))
 
         # Пульсирующий тэг(SERVER LIFE)
         try:
+
             self.tagLifeServer = self.myobj.add_variable(self.idx, 'Life Server', False, ua.VariantType.Boolean)
         except AttributeError as e:
             self.logging.warning("Сервер не создан" + str(e))
 
     def life_server_tag(self):
+
+        if self.flag != 1:
+            self.flag = 1
+            self.tagLifeServer.set_value(True)
+        else:
+            self.flag = 0
+            self.tagLifeServer.set_value(False)
+
+        timer = Timer(5, self.life_server_tag)
+        timer.start()
+
+    def float_or_str(self, value):
         try:
-            if self.flag != 1:
-                self.flag = 1
-                self.tagLifeServer.set_value(True)
-            else:
-                self.flag = 0
-                self.tagLifeServer.set_value(False)
-        except Exception:
-            self.logging.warning("Сервер мертв, пошел на перезапуск")
-            self.restart()
+            return float(value)
+        except:
+            return str(value)
 
-    def main_tags(self):
-        def float_or_str(value):
+    def add_variable_tag(self, element):
+        nodeID = NodeId(identifier=element['tag'], namespaceidx=self.idx)
+        return self.myobj.add_variable(nodeID, element['tag'], element['value'],
+                                       parser.get_ua_type(element['value']))
+
+
+    def create_tree(self, tags):
+        self.montags = []
+        self.montags.clear()
+
+        for element_tree in tags:
             try:
-                return float(value)
+                var = self.add_variable_tag(element_tree)
+                self.montags.append(var)
+                self.update_value(var, element_tree)
             except:
-                return str(value)
+                continue
 
-        self.mainTags = parser.getMainTags(self.config['path'])
-        self.dictTags = []
-        self.count = 0
+        self.logging.info('Создание дерева')
+        # return montags
 
-        for element in self.mainTags:
-            # print(element['value'])
-            self.var = self.myobj.add_variable(self.idx, element['tag'], element['value'],
-                                               parser.get_ua_type(element['value']))
-            self.datavalue = ua.DataValue(variant=float_or_str(element['value']))
-            self.datavalue.SourceTimestamp = datetime.datetime.strptime(element['date'], '%d-%b-%Y %H:%M:%S') - datetime.timedelta(hours=5)
-            if element['Status'] == 'Bad':
-                self.datavalue.StatusCode = ua.StatusCode(ua.StatusCodes.Bad)
-            self.var.set_value(self.datavalue)
-            self.count += 1
-            self.dictTags.append(self.var)
-        self.logging.info("Создание тегов: " + str(self.count))
+    def update_value(self, var, element_tree):
+        try:
+            timestamp = datetime.datetime.strptime(element_tree['date'], '%d-%b-%Y %H:%M:%S') - datetime.timedelta(hours=5)
+            datavalue = ua.DataValue(variant=self.float_or_str(element_tree['value']))
+            datavalue.SourceTimestamp = timestamp
+            if (element_tree['Status'] == 'Bad'):
+                datavalue.StatusCode = ua.StatusCode(ua.StatusCodes.Bad)
+            var.set_value(datavalue, parser.get_ua_type(element_tree['value']))
+        except KeyError:
+            self.logging.warning("Ошибка при обновление тега")
+            return False
+
+        # self.logging.info('Обновление значений тегов')
 
     def restart(self):
         self.logging.warning('Остановка сервера')
         self.server.stop()
-        # time.sleep(60)
         self.logging.warning('Запуск сервера')
         self.start()
 
     def chekingCreationTxt(self):
+
+        lastTags = parser.getMainTags(self.config['path'])
+        self.create_tree(lastTags)
+        print(self.montags)
+
         while True:
-            self.newFile = parser.getMainTags(self.config['path'])
-            if self.lastFile != self.newFile:
-                self.logging.warning("Появился новый файл! Удаление старого дерева и создание нового дерева данных")
-                self.server.delete_nodes(self.dictTags)
-                self.lastFile = self.newFile
-                self.main_tags()
-                self.life_server_tag()
+            newTags = parser.getMainTags(self.config['path'])
+            if lastTags != newTags:
+                for elem in newTags:
+                    var = self.server.get_node('ns=2;s={}'.format(elem['tag']))
+                    if var in self.montags:
+                        self.update_value(var, elem)
+                    else:
+                        self.server.delete_nodes(self.montags)
+                        self.create_tree(newTags)
+
+                self.logging.info('Обновление значений тегов')
+                lastTags = newTags
+
             else:
-                self.logging.info("Нет новых файлов")
-                self.life_server_tag()
-                time.sleep(int(self.config["UPDATE_RATE"]))
-
-
+                # self.logging.info("Нет новых файлов")
+                time.sleep(int(self.config['UPDATE_RATE']))
 
     def start(self):
-        # Запускаем сервер ,создаем ветку данных
-        # В цикле проверяем обновления текстового файла в директории,
-        # если обновился , удаяем старую ветку и создаем новую
-        # Если нет новых файлов , проверяем каждые UPDATE_RATE
-
+        self.life_server_tag()
         try:
             self.server.start()
-            self.main_tags()
+            self.logging.warning('Старт сервера')
             self.chekingCreationTxt()
-
-
 
         except KeyboardInterrupt:
             self.logging.warning('Закрытие программы')
+
         self.server.stop()
