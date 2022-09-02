@@ -13,48 +13,48 @@ from opcua.ua import NodeId, NodeIdType
 class Server_OPCUA_txt:
     def __init__(self):
         self.var = None
-        self.logging = logInfo.get_logger(__name__)
-        self.config = parser.get_config()
-        self.flag = 0
-        self.tags = parser.getMainTags(self.config['path'])
-        self.lastFile = parser.last_file(self.config['path'])
+        self.logging = logInfo.get_logger(__name__) # инииализирую логирование
+        self.config = parser.get_config()           # конфигурационный файл
+        self.flag = 0                               # флаг для пульсирующего сигнала
 
         # Конфигурация сервера
         try:
-            self.server = Server()
-            self.server.set_endpoint(self.config['UA_HOST'])
-            self.server.set_server_name(self.config["UA_SERVER_NAME"])
-            self.idx = self.server.register_namespace(self.config["UA_ROOT_NAMESPACE"])
-            self.myobj = self.server.nodes.objects.add_folder(self.idx, "DATA")
+            self.server = Server()                                                          # создаем экземпляр обьекта Server
+            self.server.set_endpoint(self.config['UA_HOST'])                                # хост под которым будет работать сервер
+            self.server.set_server_name(self.config["UA_SERVER_NAME"])                      # имя сервера
+            self.idx = self.server.register_namespace(self.config["UA_ROOT_NAMESPACE"])     # название простраства имен
+            self.myobj = self.server.nodes.objects.add_folder(self.idx, "DATA")             # создаем ветку DATA в которой будет находится теги
 
         except TypeError as e:
             self.logging.warning("Ошибка при создание сервера: " + str(e))
 
         # Пульсирующий тэг(SERVER LIFE)
         try:
-
-            self.tagLifeServer = self.myobj.add_variable(self.idx, 'Life Server', False, ua.VariantType.Boolean)
+            self.tagLifeServer = self.myobj.add_variable(self.idx, 'Life Server', False, ua.VariantType.Boolean) # создаем обьект пульсирующего сигнала в пространстве имен idx,
+                                                                                                                 # именем 'Live server', значением False, типом данных Boolean
         except AttributeError as e:
             self.logging.warning("Сервер не создан" + str(e))
 
+    # Функция запускает отдельный поток каждые 5 минут на обновление тега Live Server
     def life_server_tag(self):
 
         if self.flag != 1:
             self.flag = 1
-            self.tagLifeServer.set_value(True)
+            self.tagLifeServer.set_value(True)  # обновление тега Live Server
         else:
             self.flag = 0
-            self.tagLifeServer.set_value(False)
-
+            self.tagLifeServer.set_value(False) # обновление тега Live Server
         timer = Timer(5, self.life_server_tag)
         timer.start()
 
+    #Функция фовращает либо FLOAT или String
     def float_or_str(self, value):
         try:
             return float(value)
         except:
             return str(value)
 
+    #функция
     def add_variable_tag(self, element):
         nodeID = NodeId(identifier=element['tag'], namespaceidx=self.idx)
         return self.myobj.add_variable(nodeID, element['tag'], element['value'],
@@ -78,9 +78,15 @@ class Server_OPCUA_txt:
 
     def update_value(self, var, element_tree):
         try:
-            timestamp = datetime.datetime.strptime(element_tree['date'], '%d-%b-%Y %H:%M:%S') - datetime.timedelta(hours=5)
+            try:
+                timestamp = datetime.datetime.strptime(element_tree['date'], '%d-%b-%Y %H:%M:%S') - datetime.timedelta(hours=5)
+            except:
+                timestamp = datetime.datetime.now()
             datavalue = ua.DataValue(variant=self.float_or_str(element_tree['value']))
-            datavalue.SourceTimestamp = timestamp
+            try:
+                datavalue.SourceTimestamp = timestamp
+            except:
+                datavalue.SourceTimestamp = datetime.datetime.now()
             if (element_tree['Status'] == 'Bad'):
                 datavalue.StatusCode = ua.StatusCode(ua.StatusCodes.Bad)
             var.set_value(datavalue, parser.get_ua_type(element_tree['value']))
@@ -100,7 +106,7 @@ class Server_OPCUA_txt:
 
         lastTags = parser.getMainTags(self.config['path'])
         self.create_tree(lastTags)
-        print(self.montags)
+        # print(self.montags)
 
         while True:
             newTags = parser.getMainTags(self.config['path'])

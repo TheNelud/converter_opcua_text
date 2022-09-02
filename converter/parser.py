@@ -69,7 +69,7 @@ def dublicates(list):
 def get_file(dir):
     res = []
     fl = last_file(dir)
-    _file = open(fl, 'r')
+    _file = open(fl, 'r', encoding='UTF-8')
     if fl != False:
         for line in _file:
             line = line.strip()
