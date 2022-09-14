@@ -50,9 +50,14 @@ class Server_OPCUA_txt:
     #Функция фовращает либо FLOAT или String
     def float_or_str(self, value):
         try:
-            return float(value)
+            return int(value)
         except:
-            return str(value)
+            try:
+                return float(value)
+            except:
+                return str(value)
+
+
 
     #функция
     def add_variable_tag(self, element):
@@ -83,6 +88,7 @@ class Server_OPCUA_txt:
             except:
                 timestamp = datetime.datetime.now()
             datavalue = ua.DataValue(variant=self.float_or_str(element_tree['value']))
+            # datavalue = ua.DataValue(variant=element_tree['value'])
             try:
                 datavalue.SourceTimestamp = timestamp
             except:
